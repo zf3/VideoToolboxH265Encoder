@@ -14,6 +14,7 @@
 		F210EAF51F3EE212006E9756 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F210EAF31F3EE212006E9756 /* LaunchScreen.storyboard */; };
 		F210EB001F3EE212006E9756 /* VideoToolboxCompressionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F210EAFF1F3EE212006E9756 /* VideoToolboxCompressionTests.swift */; };
 		F210EB0B1F3EE212006E9756 /* VideoToolboxCompressionUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F210EB0A1F3EE212006E9756 /* VideoToolboxCompressionUITests.swift */; };
+		F210EB191F416083006E9756 /* CVPixelBuffer+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = F210EB181F416083006E9756 /* CVPixelBuffer+Extension.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -47,6 +48,7 @@
 		F210EB061F3EE212006E9756 /* VideoToolboxCompressionUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = VideoToolboxCompressionUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		F210EB0A1F3EE212006E9756 /* VideoToolboxCompressionUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoToolboxCompressionUITests.swift; sourceTree = "<group>"; };
 		F210EB0C1F3EE212006E9756 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		F210EB181F416083006E9756 /* CVPixelBuffer+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CVPixelBuffer+Extension.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -99,6 +101,7 @@
 			children = (
 				F210EAEA1F3EE212006E9756 /* AppDelegate.swift */,
 				F210EAEC1F3EE212006E9756 /* ViewController.swift */,
+				F210EB181F416083006E9756 /* CVPixelBuffer+Extension.swift */,
 				F210EAEE1F3EE212006E9756 /* Main.storyboard */,
 				F210EAF11F3EE212006E9756 /* Assets.xcassets */,
 				F210EAF31F3EE212006E9756 /* LaunchScreen.storyboard */,
@@ -257,6 +260,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F210EAED1F3EE212006E9756 /* ViewController.swift in Sources */,
+				F210EB191F416083006E9756 /* CVPixelBuffer+Extension.swift in Sources */,
 				F210EAEB1F3EE212006E9756 /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -425,6 +429,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				DEVELOPMENT_TEAM = P58JN8D62L;
 				INFOPLIST_FILE = VideoToolboxCompression/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = xyz.tomisacat.VideoToolboxCompression;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -439,6 +444,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				DEVELOPMENT_TEAM = P58JN8D62L;
 				INFOPLIST_FILE = VideoToolboxCompression/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = xyz.tomisacat.VideoToolboxCompression;
 				PRODUCT_NAME = "$(TARGET_NAME)";
