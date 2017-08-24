@@ -12,6 +12,9 @@ import VideoToolbox
 
 fileprivate var NALUHeader: [UInt8] = [0, 0, 0, 1]
 
+
+// 事实上，使用 VideoToolbox 硬编码的用途大多是推流编码后的 NAL Unit 而不是写入到本地一个 H.264 文件
+// 如果你想保存到本地，使用 AVAssetWriter 是一个更好的选择，它内部也是会硬编码的
 func compressionOutputCallback(outputCallbackRefCon: UnsafeMutableRawPointer?,
                                sourceFrameRefCon: UnsafeMutableRawPointer?,
                                status: OSStatus,
@@ -93,6 +96,9 @@ func compressionOutputCallback(outputCallbackRefCon: UnsafeMutableRawPointer?,
                     let spsData: NSData = NSData(bytes: sps, length: spsSize)
                     let ppsData: NSData = NSData(bytes: pps, length: ppsSize)
                     
+                    // save sps/pps to file
+                    // NOTE: 事实上，大多数情况下 sps/pps 不变/变化不大 或者 变化对视频数据产生的影响很小，
+                    // 因此，多数情况下你都可以只在文件头写入或视频流开头传输 sps/pps 数据
                     vc.handle(sps: spsData, pps: ppsData)
                 }
             }
@@ -298,7 +304,6 @@ extension ViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
         guard let fh = fileHandler else {
             return
         }
-        
         let headerData: NSData = NSData(bytes: NALUHeader, length: NALUHeader.count)
         fh.write(headerData as Data)
         fh.write(data as Data)
