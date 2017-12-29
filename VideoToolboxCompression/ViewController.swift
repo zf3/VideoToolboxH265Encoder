@@ -5,6 +5,13 @@
 //  Created by tomisacat on 12/08/2017.
 //  Copyright © 2017 tomisacat. All rights reserved.
 //
+//  greenpig 2017.12：增加HEVC的支持，使用方法如下:
+//  1. 确认下面的H265变量是true
+//  2. 翻译App在iPhone 7以上设备执行，点击Click Me开始录像，再次点击结束
+//  3. 在XCode中Window->Devices and Simualtors->选择App点下面齿轮->Download Container
+//  4. Container中有tmp/temp.h265文件就是 raw h265 data
+//  5. mp4box -add temp.h265 temp.h265.mp4就得到可以用QuickTime播放的HEVC文件了
+//
 
 import UIKit
 import AVFoundation
@@ -12,6 +19,7 @@ import VideoToolbox
 
 fileprivate var NALUHeader: [UInt8] = [0, 0, 0, 1]
 
+let H265 = true
 
 // 事实上，使用 VideoToolbox 硬编码的用途大多是推流编码后的 NAL Unit 而不是写入到本地一个 H.264 文件
 // 如果你想保存到本地，使用 AVAssetWriter 是一个更好的选择，它内部也是会硬编码的
@@ -39,7 +47,8 @@ func compressionOutputCallback(outputCallbackRefCon: UnsafeMutableRawPointer?,
         print("sampleBuffer data is not ready")
         return
     }
-    
+
+    // 调试信息
 //    let desc = CMSampleBufferGetFormatDescription(sampleBuffer)
 //    let extensions = CMFormatDescriptionGetExtensions(desc!)
 //    print("extensions: \(extensions!)")
@@ -52,6 +61,7 @@ func compressionOutputCallback(outputCallbackRefCon: UnsafeMutableRawPointer?,
 //    var dataPointer: UnsafeMutablePointer<Int8>?
 //    CMBlockBufferGetDataPointer(dataBuffer, 0, nil, &length, &dataPointer)
 //    print("length: \(length), dataPointer: \(dataPointer!)")
+    // 调试信息结束
     
     let vc: ViewController = Unmanaged.fromOpaque(outputCallbackRefCon!).takeUnretainedValue()
     
@@ -72,34 +82,70 @@ func compressionOutputCallback(outputCallbackRefCon: UnsafeMutableRawPointer?,
             var spsCount: Int = 0
             var nalHeaderLength: Int32 = 0
             var sps: UnsafePointer<UInt8>?
-            if CMVideoFormatDescriptionGetH264ParameterSetAtIndex(format!,
-                                                                  0,
-                                                                  &sps,
-                                                                  &spsSize,
-                                                                  &spsCount,
-                                                                  &nalHeaderLength) == noErr {
-                print("sps: \(String(describing: sps)), spsSize: \(spsSize), spsCount: \(spsCount), NAL header length: \(nalHeaderLength)")
+            var status: OSStatus
+            if H265 {
+                // HEVC
                 
-                // pps
+                // HEVC比H264多一个VPS
+                var vpsSize: Int = 0
+                var vpsCount: Int = 0
+                var vps: UnsafePointer<UInt8>?
                 var ppsSize: Int = 0
                 var ppsCount: Int = 0
                 var pps: UnsafePointer<UInt8>?
+
+                status = CMVideoFormatDescriptionGetHEVCParameterSetAtIndex(format!, 0, &vps, &vpsSize, &vpsCount, &nalHeaderLength)
+                if status == noErr {
+                    print("HEVC vps: \(String(describing: vps)), vpsSize: \(vpsSize), vpsCount: \(vpsCount), NAL header length: \(nalHeaderLength)")
+                    status =           CMVideoFormatDescriptionGetHEVCParameterSetAtIndex(format!, 1, &sps, &spsSize, &spsCount, &nalHeaderLength)
+                    if status == noErr {
+                        print("HEVC sps: \(String(describing: sps)), spsSize: \(spsSize), spsCount: \(spsCount), NAL header length: \(nalHeaderLength)")
+                        status = CMVideoFormatDescriptionGetHEVCParameterSetAtIndex(format!, 2, &pps, &ppsSize, &ppsCount, &nalHeaderLength)
+                        if status == noErr {
+                            print("HEVC pps: \(String(describing: pps)), ppsSize: \(ppsSize), ppsCount: \(ppsCount), NAL header length: \(nalHeaderLength)")
+
+                            let vpsData: NSData = NSData(bytes: vps, length: vpsSize)
+                            let spsData: NSData = NSData(bytes: sps, length: spsSize)
+                            let ppsData: NSData = NSData(bytes: pps, length: ppsSize)
+                            
+                            vc.handle(sps: spsData, pps: ppsData, vps: vpsData)
+
+                        }
+                    }
+
+                }
                 
+            } else {
+                // H.264
                 if CMVideoFormatDescriptionGetH264ParameterSetAtIndex(format!,
-                                                                      1,
-                                                                      &pps,
-                                                                      &ppsSize,
-                                                                      &ppsCount,
+                                                                      0,
+                                                                      &sps,
+                                                                      &spsSize,
+                                                                      &spsCount,
                                                                       &nalHeaderLength) == noErr {
-                    print("sps: \(String(describing: pps)), spsSize: \(ppsSize), spsCount: \(ppsCount), NAL header length: \(nalHeaderLength)")
+                    print("sps: \(String(describing: sps)), spsSize: \(spsSize), spsCount: \(spsCount), NAL header length: \(nalHeaderLength)")
                     
-                    let spsData: NSData = NSData(bytes: sps, length: spsSize)
-                    let ppsData: NSData = NSData(bytes: pps, length: ppsSize)
+                    // pps
+                    var ppsSize: Int = 0
+                    var ppsCount: Int = 0
+                    var pps: UnsafePointer<UInt8>?
                     
-                    // save sps/pps to file
-                    // NOTE: 事实上，大多数情况下 sps/pps 不变/变化不大 或者 变化对视频数据产生的影响很小，
-                    // 因此，多数情况下你都可以只在文件头写入或视频流开头传输 sps/pps 数据
-                    vc.handle(sps: spsData, pps: ppsData)
+                    if CMVideoFormatDescriptionGetH264ParameterSetAtIndex(format!,
+                                                                          1,
+                                                                          &pps,
+                                                                          &ppsSize,
+                                                                          &ppsCount,
+                                                                          &nalHeaderLength) == noErr {
+                        print("sps: \(String(describing: pps)), spsSize: \(ppsSize), spsCount: \(ppsCount), NAL header length: \(nalHeaderLength)")
+                        
+                        let spsData: NSData = NSData(bytes: sps, length: spsSize)
+                        let ppsData: NSData = NSData(bytes: pps, length: ppsSize)
+                        
+                        // save sps/pps to file
+                        // NOTE: 事实上，大多数情况下 sps/pps 不变/变化不大 或者 变化对视频数据产生的影响很小，
+                        // 因此，多数情况下你都可以只在文件头写入或视频流开头传输 sps/pps 数据
+                        vc.handle(sps: spsData, pps: ppsData)
+                    }
                 }
             }
         } // end of handle sps/pps
@@ -155,7 +201,7 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        let path = NSTemporaryDirectory() + "/temp.h264"
+        let path = NSTemporaryDirectory() + (H265 ? "/temp.h265" : "/temp.h264")
         try? FileManager.default.removeItem(atPath: path)
         if FileManager.default.createFile(atPath: path, contents: nil, attributes: nil) {
             fileHandler = FileHandle(forWritingAtPath: path)
@@ -245,21 +291,27 @@ extension ViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
             
             print("width: \(width), height: \(height)")
 
-            VTCompressionSessionCreate(kCFAllocatorDefault,
+            let status = VTCompressionSessionCreate(kCFAllocatorDefault,
                                        Int32(width),
                                        Int32(height),
-                                       kCMVideoCodecType_H264,
+                                       H265 ? kCMVideoCodecType_HEVC : kCMVideoCodecType_H264,
                                        nil, nil, nil,
                                        compressionOutputCallback,
                                        UnsafeMutableRawPointer(Unmanaged.passUnretained(self).toOpaque()),
                                        &compressionSession)
             
             guard let c = compressionSession else {
+                print("Error creating compression session: \(status)")
                 return
             }
             
             // set profile to Main
-            VTSessionSetProperty(c, kVTCompressionPropertyKey_ProfileLevel, kVTProfileLevel_H264_Main_AutoLevel)
+            if H265 {
+                VTSessionSetProperty(c, kVTCompressionPropertyKey_ProfileLevel,
+                                     kVTProfileLevel_HEVC_Main_AutoLevel)
+            } else {
+                VTSessionSetProperty(c, kVTCompressionPropertyKey_ProfileLevel, kVTProfileLevel_H264_Main_AutoLevel)
+            }
             // capture from camera, so it's real time
             VTSessionSetProperty(c, kVTCompressionPropertyKey_RealTime, true as CFTypeRef)
             // 关键帧间隔
@@ -288,12 +340,18 @@ extension ViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
         }
     }
     
-    func handle(sps: NSData, pps: NSData) {
+    func handle(sps: NSData, pps: NSData, vps: NSData? = nil) {
         guard let fh = fileHandler else {
             return
         }
         
         let headerData: NSData = NSData(bytes: NALUHeader, length: NALUHeader.count)
+        if let v = vps {
+            print("Got VPS data: \(v.length) bytes")
+            fh.write(headerData as Data)
+            fh.write(v as Data)
+        }
+        
         fh.write(headerData as Data)
         fh.write(sps as Data)
         fh.write(headerData as Data)
