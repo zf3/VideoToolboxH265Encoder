@@ -1,6 +1,6 @@
 # VideoToolbox HEVC Encoder Sample Code
 
-Sample code that capture and encode video into HEVC (or H.264) with AVFoundation and VideoToolbox. The code is in Swift 4 and tested on XCode 9.2 / iOS 11.2.1 / iPhone X.
+Sample code that capture and encode video into HEVC (or H.264) with AVFoundation and VideoToolbox. The code is in Swift 5 and tested on XCode 11.5 / iOS 11.2.1 / iPhone X.
 
 Based on [tomisacat's VideoToolboxCompression project](https://github.com/tomisacat/VideoToolboxCompression).
 
